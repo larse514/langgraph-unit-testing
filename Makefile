@@ -20,7 +20,7 @@ $(VENV)/bin/activate: simple_agent/requirements.txt
 	$(PYTHON) -m venv $(VENV)
 	$(VENV)/bin/pip install --upgrade pip
 	$(VENV)/bin/pip install -r simple_agent/requirements.txt
-	$(VENV)/bin/pip install langgraph-cli
+	$(VENV)/bin/pip install -U "langgraph-cli[inmem]"
 	@echo "Virtual environment created. Run 'source $(VENV)/bin/activate' to activate."
 
 dev: install
