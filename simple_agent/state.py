@@ -8,3 +8,4 @@ class EmailState(TypedDict):
     email_to: str
     # Output
     requires_attention: Optional[bool]
+    jira_ticket_id: Optional[str]
