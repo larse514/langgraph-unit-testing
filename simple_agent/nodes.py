@@ -1,34 +1,57 @@
 import logging
 import uuid
 
+from langchain_openai import ChatOpenAI
+from langchain_core.messages import SystemMessage, HumanMessage
+
 from simple_agent.state import EmailState
 
 logger = logging.getLogger(__name__)
 
-# Keywords that indicate an email requires attention
-URGENT_KEYWORDS = [
-    "urgent",
-    "asap",
-    "immediately",
-    "critical",
-    "important",
-    "deadline",
-    "action required",
-    "time sensitive",
-    "priority",
-    "emergency",
-]
-
 
 def check_email_attention(state: EmailState) -> EmailState:
-    """Determine if an email requires attention based on subject and body."""
-    subject = state["email_subject"].lower()
-    body = state["email_body"].lower()
+    """Determine if an email requires attention using OpenAI."""
+    subject = state["email_subject"]
+    body = state["email_body"]
     
-    # Check if any urgent keywords are in the subject or body
-    combined_text = f"{subject} {body}"
+    llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
     
-    requires_attention = any(keyword in combined_text for keyword in URGENT_KEYWORDS)
+    system_prompt = """You are a support email classifier for a SaaS product. Your job is to determine if a customer support email requires immediate attention from the support team.
+
+An email requires immediate attention if it contains:
+- Service outages or downtime reports affecting the customer
+- Critical bugs blocking the customer's workflow
+- Security concerns or potential data breaches
+- Billing issues such as failed payments or incorrect charges
+- Account access problems (locked out, authentication failures)
+- Data loss or corruption reports
+- Compliance or legal concerns
+- Customers expressing significant frustration or threatening to cancel
+
+An email does NOT require immediate attention if it is:
+- General feature requests or suggestions
+- How-to questions or documentation requests
+- Non-urgent feedback or praise
+- Newsletter or marketing-related inquiries
+- Routine account updates or preference changes
+
+Respond with ONLY "yes" or "no" - nothing else."""
+
+    human_prompt = f"""Subject: {subject}
+
+Body: {body}
+
+Does this email require immediate attention?"""
+
+    messages = [
+        SystemMessage(content=system_prompt),
+        HumanMessage(content=human_prompt),
+    ]
+    
+    response = llm.invoke(messages)
+    answer = response.content.strip().lower()
+    
+    requires_attention = answer == "yes"
     
     return {"requires_attention": requires_attention}
 
