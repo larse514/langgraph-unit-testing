@@ -1,3 +1,4 @@
-langgraph>=1.0.4
-langchain-openai>=1.1.0
+langgraph==0.6.11
+langchain-openai>=0.3.35
 pytest>=8.0.0
+langsmith>=0.1.0
