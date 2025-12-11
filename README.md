@@ -1,6 +1,6 @@
-# LangGraph Unit Testing Demo
+# LangGraph Testing Demo
 
-An example project to show how to unit test LangGraph applications. 
+An example project to show how to test & evaluate LangGraph applications. 
 
 ## What It Does
 
@@ -14,6 +14,7 @@ The key focus is demonstrating how to:
 - Use **dependency injection** in LangGraph graphs via a factory function
 - Write **unit tests** that stub out LLM calls and external services
 - Test **graph routing logic** without hitting real APIs
+- Evaluate graphs using ***LangSmith evaluators***
 
 ## Commands
 
@@ -62,21 +63,8 @@ cp .env.example .env
 # 4. Run tests (no API key needed — tests use stubs!)
 make test
 
-# 5. Start the dev server (requires API key)
+# 5. Run evals (requires API key)
+make test-eval
+# 6. Start the dev server (requires API key)
 make dev
-```
-
-## Project Structure
-
-```
-├── simple_agent/
-│   ├── agent.py        # Graph definition with dependency injection
-│   ├── nodes.py        # Node functions (LLM calls, Jira client)
-│   └── state.py        # TypedDict state definition
-├── tests/
-│   ├── stubs/
-│   │   └── stub_nodes.py   # Stubbed node functions for testing
-│   └── test_graph.py       # Unit tests
-├── Makefile
-└── .env.example
 ```
