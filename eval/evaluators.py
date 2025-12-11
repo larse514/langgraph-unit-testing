@@ -3,7 +3,7 @@
 from typing import Any, Dict
 
 
-def correctness_evaluator(run: Dict[str, Any], example: Dict[str, Any]) -> Dict[str, Any]:
+def does_email_require_attention_evaluator(run: Dict[str, Any], example: Dict[str, Any]) -> Dict[str, Any]:
     """
     Evaluates if the graph correctly classified the email's attention requirement.
     
@@ -28,7 +28,7 @@ def correctness_evaluator(run: Dict[str, Any], example: Dict[str, Any]) -> Dict[
     }
 
 
-def ticket_creation_evaluator(run: Dict[str, Any], example: Dict[str, Any]) -> Dict[str, Any]:
+def should_ticket_be_created_evaluator(run: Dict[str, Any], example: Dict[str, Any]) -> Dict[str, Any]:
     """
     Evaluates if the Jira ticket was created (or not created) correctly.
     

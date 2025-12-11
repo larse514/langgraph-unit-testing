@@ -1,4 +1,4 @@
-.PHONY: install dev clean start help test
+.PHONY: install dev clean start help test test-eval
 
 # Python interpreter
 PYTHON := python3
@@ -13,6 +13,7 @@ help:
 	@echo "  make clean    - Remove virtual environment"
 	@echo "  make start    - Alias for 'make dev'"
 	@echo "  make test     - Run unit tests with pytest"
+	@echo "  make test-eval - Run evaluation tests with LangSmith caching"
 
 install: $(VENV)/bin/activate
 
@@ -29,7 +30,12 @@ dev: install
 start: dev
 
 test:
-	$(VENV)/bin/pytest tests -v
+	$(VENV)/bin/pytest tests/test_graph.py -v
+
+test-eval:
+	LANGSMITH_TEST_TRACKING=false \
+	LANGSMITH_TEST_CACHE=eval/cassettes \
+	$(VENV)/bin/pytest eval/test_evals.py -v
 
 clean:
 	rm -rf $(VENV)

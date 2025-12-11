@@ -4,3 +4,4 @@
 .venv
 .langgraph_api
 __pycache__
+eval/cassettes/
