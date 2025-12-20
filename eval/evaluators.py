@@ -104,8 +104,6 @@ def summary_faithfulness_evaluator(run: Dict[str, Any], example: Dict[str, Any])
     """
     Evaluate if the summary is faithful to the original email (no hallucinations).
     
-    Priority: Critical - Hallucinations in summaries could cause incorrect ticket handling.
-    
     Args:
         run: The run output containing email_summary
         example: The example containing original email inputs
@@ -155,8 +153,6 @@ Is this summary faithful to the original email?"""
 def summary_completeness_evaluator(run: Dict[str, Any], example: Dict[str, Any]) -> Dict[str, Any]:
     """
     Evaluate if the summary captures all key information from the email.
-    
-    Priority: High - Ensures agents get all relevant context.
     
     Args:
         run: The run output containing email_summary
@@ -210,8 +206,6 @@ def summary_conciseness_evaluator(run: Dict[str, Any], example: Dict[str, Any]) 
     """
     Evaluate if the summary is appropriately concise (2-3 sentences).
     
-    Priority: Medium - Quality check for adherence to prompt spec.
-    
     Args:
         run: The run output containing email_summary
         example: The example (not used, but required for evaluator signature)
@@ -262,8 +256,6 @@ Count the sentences and evaluate conciseness."""
 def summary_triage_usefulness_evaluator(run: Dict[str, Any], example: Dict[str, Any]) -> Dict[str, Any]:
     """
     Evaluate if the summary would help a support agent triage the ticket.
-    
-    Priority: High - Directly measures business value.
     
     Args:
         run: The run output containing email_summary

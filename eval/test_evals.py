@@ -24,13 +24,10 @@ def load_test_cases():
         for line in f:
             if line.strip():
                 data = json.loads(line)
-                cases.append((
-                    data["inputs"]["email_subject"],
-                    data["inputs"]["email_body"],
-                    data["inputs"]["email_to"],
-                    data["outputs"]["requires_attention"],
-                    data["outputs"]["should_create_ticket"],
-                ))
+                cases.append({
+                    "inputs": data["inputs"],
+                    "outputs": data["outputs"],
+                })
     return cases
 
 
@@ -38,31 +35,34 @@ TEST_CASES = load_test_cases()
 
 
 @pytest.mark.parametrize(
-    "email_subject,email_body,email_to,expected_attention,expected_ticket",
+    "example",
     TEST_CASES,
-    ids=[f"{TEST_CASES[i][0]}" for i in range(len(TEST_CASES))]
+    ids=[case["inputs"]["email_subject"] for case in TEST_CASES]
 )
-def test_email_classification(email_subject, email_body, email_to, expected_attention, expected_ticket):
+def test_email_classification(example):
     """Test that the email classification graph correctly classifies emails."""
     state = {
-        "email_subject": email_subject,
-        "email_body": email_body,
-        "email_to": email_to,
+        "email_subject": example["inputs"]["email_subject"],
+        "email_body": example["inputs"]["email_body"],
+        "email_to": example["inputs"]["email_to"],
         "requires_attention": None,
         "jira_ticket_id": None,
     }
     
     result = graph.invoke(state)
     
+    expected_attention = example["outputs"]["requires_attention"]
+    expected_ticket = example["outputs"]["should_create_ticket"]
+    
     assert result["requires_attention"] == expected_attention, (
         f"Expected requires_attention={expected_attention}, "
-        f"got {result['requires_attention']} for subject: {email_subject}"
+        f"got {result['requires_attention']} for subject: {example['inputs']['email_subject']}"
     )
     
     ticket_created = result["jira_ticket_id"] is not None
     assert ticket_created == expected_ticket, (
         f"Expected ticket_created={expected_ticket}, "
-        f"got {ticket_created} for subject: {email_subject}"
+        f"got {ticket_created} for subject: {example['inputs']['email_subject']}"
     )
 
 
@@ -78,28 +78,10 @@ SUMMARY_EVALUATORS = [
 ]
 
 
-def load_summary_test_cases():
-    """Load test cases for summary evaluation."""
-    dataset_path = Path(__file__).parent / "dataset.jsonl"
-    cases = []
-    with open(dataset_path) as f:
-        for line in f:
-            if line.strip():
-                data = json.loads(line)
-                cases.append({
-                    "inputs": data["inputs"],
-                    "outputs": data["outputs"],
-                })
-    return cases
-
-
-SUMMARY_TEST_CASES = load_summary_test_cases()
-
-
 @pytest.mark.parametrize(
     "example",
-    SUMMARY_TEST_CASES,
-    ids=[case["inputs"]["email_subject"] for case in SUMMARY_TEST_CASES]
+    TEST_CASES,
+    ids=[case["inputs"]["email_subject"] for case in TEST_CASES]
 )
 @pytest.mark.parametrize(
     "evaluator_name,evaluator_fn,threshold",
