@@ -1,4 +1,6 @@
 langgraph==0.6.11
 langchain-openai>=0.3.35
 pytest>=8.0.0
+pytest-xdist>=3.8.0
 langsmith[pytest]>=0.4.58
+python-dotenv>=1.2.1

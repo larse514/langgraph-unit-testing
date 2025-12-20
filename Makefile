@@ -35,7 +35,7 @@ test:
 test-eval:
 	LANGSMITH_TEST_TRACKING=false \
 	LANGSMITH_TEST_CACHE=eval/cassettes \
-	$(VENV)/bin/pytest eval/test_evals.py -v
+	$(VENV)/bin/pytest eval/test_evals.py -v -n auto
 
 clean:
 	rm -rf $(VENV)
