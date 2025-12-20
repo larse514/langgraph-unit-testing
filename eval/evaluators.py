@@ -1,10 +1,18 @@
 """Custom evaluators for the email classification graph."""
 
+import os
 from typing import Any, Dict
 
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import SystemMessage, HumanMessage
 from pydantic import BaseModel
+
+DEFAULT_JUDGE_MODEL = "gpt-4o-mini"
+
+
+def get_judge_model() -> str:
+    """Get the LLM judge model from environment or use default."""
+    return os.environ.get("LLM_JUDGE_MODEL", DEFAULT_JUDGE_MODEL)
 
 
 def does_email_require_attention_evaluator(run: Dict[str, Any], example: Dict[str, Any]) -> Dict[str, Any]:
@@ -128,7 +136,7 @@ Generated Summary: {summary}
 
 Is this summary faithful to the original email?"""
 
-    llm = ChatOpenAI(model="gpt-4o-mini", temperature=0).with_structured_output(FaithfulnessResponse)
+    llm = ChatOpenAI(model=get_judge_model(), temperature=0).with_structured_output(FaithfulnessResponse)
     
     messages = [
         SystemMessage(content=instructions),
@@ -182,7 +190,7 @@ Generated Summary: {summary}
 
 Evaluate the completeness of this summary."""
 
-    llm = ChatOpenAI(model="gpt-4o-mini", temperature=0).with_structured_output(CompletenessResponse)
+    llm = ChatOpenAI(model=get_judge_model(), temperature=0).with_structured_output(CompletenessResponse)
     
     messages = [
         SystemMessage(content=instructions),
@@ -226,7 +234,7 @@ Count the sentences in the summary."""
 
 Count the sentences and evaluate conciseness."""
 
-    llm = ChatOpenAI(model="gpt-4o-mini", temperature=0).with_structured_output(ConcisenessResponse)
+    llm = ChatOpenAI(model=get_judge_model(), temperature=0).with_structured_output(ConcisenessResponse)
     
     messages = [
         SystemMessage(content=instructions),
@@ -286,7 +294,7 @@ Generated Summary: {summary}
 
 Would this summary help a support agent quickly triage this ticket?"""
 
-    llm = ChatOpenAI(model="gpt-4o-mini", temperature=0).with_structured_output(TriageResponse)
+    llm = ChatOpenAI(model=get_judge_model(), temperature=0).with_structured_output(TriageResponse)
     
     messages = [
         SystemMessage(content=instructions),

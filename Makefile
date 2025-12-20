@@ -35,7 +35,7 @@ test:
 test-eval:
 	LANGSMITH_TEST_TRACKING=false \
 	LANGSMITH_TEST_CACHE=eval/cassettes \
-	$(VENV)/bin/pytest eval/test_evals.py -v -n auto
+	$(VENV)/bin/pytest eval/test_evals.py -v -n auto $(if $(JUDGE_MODEL),--judge-model=$(JUDGE_MODEL),)
 
 clean:
 	rm -rf $(VENV)
