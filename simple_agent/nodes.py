@@ -9,6 +9,39 @@ from simple_agent.state import EmailState
 logger = logging.getLogger(__name__)
 
 
+def summarize_email(state: EmailState) -> EmailState:
+    """Generate a concise summary of the email using OpenAI."""
+    subject = state["email_subject"]
+    body = state["email_body"]
+    
+    llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
+    
+    system_prompt = """You are an email summarization assistant. Your job is to create a brief, clear summary of customer support emails.
+
+Create a 2-3 sentence summary that captures:
+- The main topic or issue
+- Any specific requests or problems mentioned
+- The urgency or tone if relevant
+
+Be concise and factual. Do not include greetings, signatures, or filler content in your summary."""
+
+    human_prompt = f"""Subject: {subject}
+
+Body: {body}
+
+Provide a brief summary of this email."""
+
+    messages = [
+        SystemMessage(content=system_prompt),
+        HumanMessage(content=human_prompt),
+    ]
+    
+    response = llm.invoke(messages)
+    summary = response.content.strip()
+    
+    return {"email_summary": summary}
+
+
 def check_email_attention(state: EmailState) -> EmailState:
     """Determine if an email requires attention using OpenAI."""
     subject = state["email_subject"]
@@ -71,7 +104,8 @@ def create_jira_ticket(state: EmailState) -> EmailState:
     client = JiraClient()
     
     summary = f"Email requires attention: {state['email_subject']}"
-    description = f"Email to: {state['email_to']}\n\nBody:\n{state['email_body']}"
+    email_summary = state.get("email_summary", "No summary available")
+    description = f"Email to: {state['email_to']}\n\nSummary:\n{email_summary}\n\nBody:\n{state['email_body']}"
     
     ticket_id = client.create_ticket(summary, description)
     logger.info(f"Created Jira ticket {ticket_id} for email: {state['email_subject']}")

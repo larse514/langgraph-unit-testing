@@ -7,5 +7,6 @@ class EmailState(TypedDict):
     email_subject: str
     email_to: str
     # Output
+    email_summary: Optional[str]
     requires_attention: Optional[bool]
     jira_ticket_id: Optional[str]
