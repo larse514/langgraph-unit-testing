@@ -11,3 +11,4 @@ For each plan, create a task to generate a prompt markdown file in the plans dir
 2. includes the original prompt
 3. includes the plan that was created from the prompt
 4. includes any questions and answers or clarifications that were provided during the plan process
+5. include snippets of code changes to show the reviewer what was changed or added
