@@ -7,6 +7,8 @@ from pathlib import Path
 from dotenv import load_dotenv
 load_dotenv()
 
+from langsmith import expect, testing as t
+
 from simple_agent.agent import graph
 from eval.evaluators import (
     summary_faithfulness_evaluator,
@@ -34,36 +36,41 @@ def load_test_cases():
 TEST_CASES = load_test_cases()
 
 
+@pytest.mark.langsmith
 @pytest.mark.parametrize(
-    "example",
+    "sample_email",
     TEST_CASES,
     ids=[case["inputs"]["email_subject"] for case in TEST_CASES]
 )
-def test_email_classification(example):
+def test_email_classification(sample_email):
     """Test that the email classification graph correctly classifies emails."""
+    # Log inputs and expected outputs to LangSmith
+    t.log_inputs(sample_email["inputs"])
+    t.log_reference_outputs(sample_email["outputs"])
+    
     state = {
-        "email_subject": example["inputs"]["email_subject"],
-        "email_body": example["inputs"]["email_body"],
-        "email_to": example["inputs"]["email_to"],
+        "email_subject": sample_email["inputs"]["email_subject"],
+        "email_body": sample_email["inputs"]["email_body"],
+        "email_to": sample_email["inputs"]["email_to"],
         "requires_attention": None,
         "jira_ticket_id": None,
     }
     
     result = graph.invoke(state)
     
-    expected_attention = example["outputs"]["requires_attention"]
-    expected_ticket = example["outputs"]["should_create_ticket"]
-    
-    assert result["requires_attention"] == expected_attention, (
-        f"Expected requires_attention={expected_attention}, "
-        f"got {result['requires_attention']} for subject: {example['inputs']['email_subject']}"
-    )
-    
+    # Log actual outputs to LangSmith
     ticket_created = result["jira_ticket_id"] is not None
-    assert ticket_created == expected_ticket, (
-        f"Expected ticket_created={expected_ticket}, "
-        f"got {ticket_created} for subject: {example['inputs']['email_subject']}"
-    )
+    t.log_outputs({
+        "requires_attention": result["requires_attention"],
+        "ticket_created": ticket_created,
+    })
+    
+    expected_attention = sample_email["outputs"]["requires_attention"]
+    expected_ticket = sample_email["outputs"]["should_create_ticket"]
+    
+    # Use expect for assertions - auto-logs feedback to LangSmith
+    expect(result["requires_attention"]).to_equal(expected_attention)
+    expect(ticket_created).to_equal(expected_ticket)
 
 
 # =============================================================================
@@ -78,9 +85,10 @@ SUMMARY_EVALUATORS = [
 ]
 
 
+@pytest.mark.langsmith
 @pytest.mark.parametrize(
-    "example",
-    TEST_CASES,
+    "sample_email",
+    TEST_CASES, 
     ids=[case["inputs"]["email_subject"] for case in TEST_CASES]
 )
 @pytest.mark.parametrize(
@@ -88,12 +96,16 @@ SUMMARY_EVALUATORS = [
     SUMMARY_EVALUATORS,
     ids=[e[0] for e in SUMMARY_EVALUATORS]
 )
-def test_email_summary_quality(example, evaluator_name, evaluator_fn, threshold):
+def test_email_summary_quality(sample_email, evaluator_name, evaluator_fn, threshold):
     """Test that email summaries meet quality thresholds using LLM-as-judge evaluators."""
+    # Log inputs and expected outputs to LangSmith
+    t.log_inputs(sample_email["inputs"])
+    t.log_reference_outputs(sample_email["outputs"])
+    
     state = {
-        "email_subject": example["inputs"]["email_subject"],
-        "email_body": example["inputs"]["email_body"],
-        "email_to": example["inputs"]["email_to"],
+        "email_subject": sample_email["inputs"]["email_subject"],
+        "email_body": sample_email["inputs"]["email_body"],
+        "email_to": sample_email["inputs"]["email_to"],
         "requires_attention": None,
         "jira_ticket_id": None,
         "email_summary": None,
@@ -102,12 +114,20 @@ def test_email_summary_quality(example, evaluator_name, evaluator_fn, threshold)
     # Run the graph to generate the summary
     result = graph.invoke(state)
     
-    # Run the evaluator
-    eval_result = evaluator_fn(result, example)
+    # Log actual outputs to LangSmith
+    t.log_outputs({"email_summary": result.get("email_summary")})
     
-    assert eval_result["score"] >= threshold, (
-        f"{evaluator_name} score {eval_result['score']:.2f} below threshold {threshold} "
-        f"for subject: {example['inputs']['email_subject']}. "
-        f"Comment: {eval_result.get('comment', 'N/A')}"
-    )
+    # Run the evaluator within trace_feedback context
+    # This separates LLM-as-judge calls from application traces
+    with t.trace_feedback():
+        eval_result = evaluator_fn(result, sample_email)
+        t.log_feedback(
+            key=evaluator_name,
+            score=eval_result["score"],
+            comment=eval_result.get("comment"),
+        )
+    
+    # Use expect for threshold assertion - auto-logs 'expectation' feedback to LangSmith
+    # Subtract small epsilon since expect only has > not >=
+    expect(eval_result["score"]).to_be_greater_than(threshold - 0.001)
 
